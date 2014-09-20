@@ -365,11 +365,14 @@ album = {
 				newTitle = (newTitle==="") ? "Untitled" : newTitle;
 
 				if (visible.album()) {
-					var id = albumIDs[0];
-					
+
 					album.json.title = newTitle;
-					albums.json.content[id].title = newTitle;
 					view.album.title();
+
+					if (albums.json) {
+						var id = albumIDs[0];
+						albums.json.content[id].title = newTitle;
+					}
 
 				} else if (visible.albums()) {
 
@@ -1960,8 +1963,7 @@ var lychee = {
 				album.load(albumID, true);
 			}
 			photo.load(photoID, albumID);
-            photo.preloadNext(photoID,albumID);
-
+            
 		} else if (albumID) {
 
 			// Trash data
@@ -2493,7 +2495,9 @@ photo = {
 			view.photo.init();
 
 			lychee.imageview.show();
-			setTimeout(function() { lychee.content.show() }, 300);
+			setTimeout(function() { 
+				lychee.content.show();
+				photo.preloadNext(photoID,albumID); }, 300);
 
 		});
 

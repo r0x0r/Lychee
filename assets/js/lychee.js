@@ -190,8 +190,7 @@ var lychee = {
 				album.load(albumID, true);
 			}
 			photo.load(photoID, albumID);
-            photo.preloadNext(photoID,albumID);
-
+            
 		} else if (albumID) {
 
 			// Trash data
