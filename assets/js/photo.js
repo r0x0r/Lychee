@@ -5,10 +5,10 @@
  * @copyright	2014 by Tobias Reich
  */
 
-cache = null;
 photo = {
 
 	json: null,
+	cache: null,
 
 	getID: function() {
 
@@ -44,26 +44,40 @@ photo = {
 			view.photo.init();
 
 			lychee.imageview.show();
+
 			setTimeout(function() { 
 				lychee.content.show();
 				photo.preloadNext(photoID,albumID); }, 300);
 
+
 		});
 
 	},
-	
+
 	//preload the next photo for better response time
 	preloadNext: function(photoID) {
-		if(album.json &&
-		   album.json.content && 
+
+		var nextPhoto,
+			url;
+
+		// Never preload on mobile devices with bare RAM and
+		// mostly mobile internet
+		if (!mobileBrowser()) return false;
+
+		if (album.json &&
+		   album.json.content &&
 		   album.json.content[photoID] &&
 		   album.json.content[photoID].nextPhoto!="") {
-			
-			var nextPhoto    = album.json.content[photoID].nextPhoto;
-			var url   = album.json.content[nextPhoto].url; 
-			cache     = new Image();
-			cache.src = url;
+
+			nextPhoto	= album.json.content[photoID].nextPhoto;
+			url			= album.json.content[nextPhoto].url;
+
+			photo.cache			= new Image();
+			photo.cache.src		= url;
+			photo.cache.onload	= function() { photo.cache = null };
+
 		}
+
 	},
 
 	parse: function() {
@@ -141,6 +155,8 @@ photo = {
 		if (!photoIDs) return false;
 		if (photoIDs instanceof Array===false) photoIDs = [photoIDs];
 
+		albums.refresh();
+
 		params = "duplicatePhoto&photoIDs=" + photoIDs;
 		lychee.api(params, function(data) {
 
@@ -193,6 +209,8 @@ photo = {
 
 				// Only when search is not active
 				if (!visible.albums()) lychee.goto(album.getID());
+
+				albums.refresh();
 
 				params = "deletePhoto&photoIDs=" + photoIDs;
 				lychee.api(params, function(data) {
@@ -303,6 +321,8 @@ photo = {
 
 		});
 
+		albums.refresh();
+
 		params = "setPhotoAlbum&photoIDs=" + photoIDs + "&albumID=" + albumID;
 		lychee.api(params, function(data) {
 
@@ -327,29 +347,27 @@ photo = {
 			view.album.content.star(id);
 		});
 
+		albums.refresh();
+
 		params = "setPhotoStar&photoIDs=" + photoIDs;
 		lychee.api(params, function(data) {
 
 			if (data!==true) lychee.error(null, params, data);
 
 		});
-		
-		albums.refresh();
 
 	},
 
 	setPublic: function(photoID, e) {
 
 		var params;
-		
+
 		if (photo.json.public==2) {
+
 			modal.show("Public Album", "This photo is located in a public album. To make this photo private or public, edit the visibility of the associated album.", [["Show Album", function() { lychee.goto(photo.json.original_album) }], ["Close", function() {}]]);
 			return false;
 
 		}
-		
-		albums.refresh();
-
 
 		if (visible.photo()) {
 
@@ -361,6 +379,8 @@ photo = {
 
 		album.json.content[photoID].public = (album.json.content[photoID].public==0) ? 1 : 0;
 		view.album.content.public(photoID);
+
+		albums.refresh();
 
 		params = "setPhotoPublic&photoID=" + photoID;
 		lychee.api(params, function(data) {
